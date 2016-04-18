@@ -7,7 +7,9 @@ import com.coolweather.app.util.HttpUtil;
 import com.coolweather.app.util.Utility;
 
 import android.app.Activity;
+import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.text.TextUtils;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -42,14 +44,16 @@ public class WeatherActivity extends Activity implements OnClickListener {
 		this.temp2Text = (TextView)this.findViewById(R.id.temp2);
 		this.currentDateText = (TextView)this.findViewById(R.id.current_date);
 		//this.switchCity = this.findViewById(R.id.s)
-		String contryCode = this.getIntent().getStringExtra("county_code");
-		if(!TextUtils.isEmpty(contryCode))
+		String countyCode = this.getIntent().getStringExtra("county_code");
+		if(!TextUtils.isEmpty(countyCode))
 		{
 			this.publishText.setText("同步中...");
 			this.weatherInfoLayout.setVisibility(View.INVISIBLE);
+			this.cityNameText.setVisibility(View.INVISIBLE);
+			queryWeatherCode(countyCode);
 			//
 		}else{
-			
+			showWeather();
 		}
 	}
 	@Override
@@ -60,12 +64,13 @@ public class WeatherActivity extends Activity implements OnClickListener {
 	private void queryWeatherCode(String countyCode)
 	{
 		String address = "http://www.weather.com.cn/data/list3/city" + countyCode + ".xml";
+		this.queryFromServer(address, "countyCode");
 	}
 	
 	private void queryWeatherInfor(String weatherCode)
 	{
 		String address = "http://www.weather.com.cn/data/cityinfo/" + weatherCode + ".html";
-		queryFromServer(address,"countyCode");
+		queryFromServer(address,"weatherCode");
 	}
 	
 	private void queryFromServer(final String address,final String type)
@@ -116,6 +121,14 @@ public class WeatherActivity extends Activity implements OnClickListener {
 
 	private void showWeather()
 	{
-		
+		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+		this.cityNameText.setText(prefs.getString("city_name", ""));
+		this.temp1Text.setText(prefs.getString("temp1", ""));
+		this.temp2Text.setText(prefs.getString("temp2", ""));
+		this.weatherDespText.setText(prefs.getString("weather_desp", ""));
+		this.publishText.setText(prefs.getString("publish_time", "") + "发布");
+		this.currentDateText.setText(prefs.getString("current_date", ""));
+		this.weatherInfoLayout.setVisibility(View.VISIBLE);
+		this.cityNameText.setVisibility(View.VISIBLE);
 	}
 }
