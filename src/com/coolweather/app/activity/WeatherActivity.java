@@ -2,15 +2,18 @@ package com.coolweather.app.activity;
 
 
 import com.coolweather.app.R;
+import com.coolweather.app.service.AutoUpdateService;
 import com.coolweather.app.util.HttpCallbackListener;
 import com.coolweather.app.util.HttpUtil;
 import com.coolweather.app.util.Utility;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.Window;
@@ -27,8 +30,8 @@ public class WeatherActivity extends Activity implements OnClickListener {
 	private TextView temp1Text;
 	private TextView temp2Text;
 	private TextView currentDateText;
-	private Button switchCity;
-	private Button refreshWeather;
+	private Button switchButton;
+	private Button refreshButton;
 	@Override
 	protected void onCreate(Bundle savedInstanceState)
 	{
@@ -50,16 +53,45 @@ public class WeatherActivity extends Activity implements OnClickListener {
 			this.publishText.setText("同步中...");
 			this.weatherInfoLayout.setVisibility(View.INVISIBLE);
 			this.cityNameText.setVisibility(View.INVISIBLE);
+			Log.i("Weather County code", countyCode);
 			queryWeatherCode(countyCode);
 			//
 		}else{
 			showWeather();
 		}
+		
+		this.switchButton =(Button)this.findViewById(R.id.switch_city);
+		this.refreshButton =(Button)this.findViewById(R.id.refresh_weather);
+		
+		this.switchButton.setOnClickListener(this);
+		this.refreshButton.setOnClickListener(this);
+		
+		Intent intent = new Intent(this,AutoUpdateService.class);
+		this.startService(intent);
 	}
 	@Override
 	public void onClick(View v) {
 		// TODO Auto-generated method stub
-
+		switch(v.getId())
+		{
+		case R.id.switch_city:
+			Intent intent = new Intent(this,ChooseAreaActivity.class);
+			intent.putExtra("from_weather_activity", true);
+			startActivity(intent);
+			finish();
+			break;
+		case R.id.refresh_weather:
+			this.publishText.setText("同步中");
+			SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+			String weatherCode = prefs.getString("weather_code", "");
+			if(!TextUtils.isEmpty(weatherCode))
+			{
+				queryWeatherInfor(weatherCode);
+			}
+			break;
+		default:
+			break;
+		}
 	}
 	private void queryWeatherCode(String countyCode)
 	{
@@ -88,12 +120,15 @@ public class WeatherActivity extends Activity implements OnClickListener {
 						if(array!=null && array.length == 2)
 						{
 							String weatherCode = array[1];
+							//Log.i("Weather WeatherCode", weatherCode);
 							queryWeatherInfor(weatherCode);
 						}
 					}
 				}else if("weatherCode".equals(type))
 				{
 					Utility.handleWeatherResponse(WeatherActivity.this, response);
+					//Log.i("Weather Weather xinxi", response);
+					
 					runOnUiThread(new Runnable(){
 
 						@Override
